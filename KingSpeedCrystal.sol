@@ -1,3 +1,7 @@
+/**
+ *Submitted for verification at BscScan.com on 2021-11-18
+*/
+
 //SPDX-License-Identifier: MIT
 pragma solidity 0.6.12;
 
@@ -12,6 +16,13 @@ pragma solidity 0.6.12;
  *
  * This contract is only required for intermediate, library-like contracts.
  */
+abstract contract BPContract {
+    function protect(
+        address sender,
+        address receiver,
+        uint256 amount
+    ) external virtual;
+}
 contract Context {
     // Empty internal constructor, to prevent people from mistakenly deploying
     // an instance of this contract, which should be used via inheritance.
@@ -854,9 +865,26 @@ contract BEP20 is Context, IBEP20, Ownable {
     }
 }
 
-// KingSpeedToken with Governance.
-contract KingSpeedToken is BEP20('KingSpeedCrystal', 'KSC') {
+// KingSpeedCrystalToken with Governance.
+contract KingSpeedCrystalToken is BEP20('KingSpeed Crystal', 'KSC') {
+    BPContract public BP;
+    bool public bpEnabled;
+    event BPAdded(address indexed bp);
+    event BPEnabled(bool indexed _enabled);
+    event BPTransfer(address from, address to, uint256 amount);
     /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
+    function setBpAddress(address _bp) external onlyOwner {
+        require(address(BP) == address(0), "Can only be initialized once");
+        BP = BPContract(_bp);
+
+        emit BPAdded(_bp);
+    }
+
+    function setBpEnabled(bool _enabled) external onlyOwner {
+        require(address(BP) != address(0), "You have to set BP address first");
+        bpEnabled = _enabled;
+        emit BPEnabled(_enabled);
+    }
     function mint(address _to, uint256 _amount) public onlyOwner {
         _mint(_to, _amount);
         _moveDelegates(address(0), _delegates[_to], _amount);
